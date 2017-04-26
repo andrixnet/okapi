@@ -179,6 +179,13 @@ https://gist.github.com/DieBatzen/5814dc7368c1034470c8/
                 alt site de geocaching.
             </desc>
         </lang>
+        <lang id="hu">
+            <name>Csak Opencaching</name>
+            <desc>
+                ___translate_me___ This geocache is listed at Opencaching only. It is not listed
+                on any other geocaching site.
+            </desc>
+        </lang>
         <lang id="es">
             <name>Solo loggeable en Opencaching</name>
             <desc>
