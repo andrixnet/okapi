@@ -72,7 +72,7 @@ class WebService
                 'rating', "If present, it must be an integer in the 1..5 scale."
             );
         }
-        if ($rating && $logtype != 'Found it' && $logtype != 'Attended') {
+        if ($rating && $logtype != Okapi::LOGTYPE_NAME_FOUNDIT && $logtype != Okapi::LOGTYPE_NAME_ATTENDED) {
             throw new BadRequest(
                 "Rating is allowed only for 'Found it' and 'Attended' logtypes."
             );
@@ -95,9 +95,9 @@ class WebService
         if (!in_array($recommend, array('true', 'false')))
             throw new InvalidParam('recommend', "Unknown option: '$recommend'.");
         $recommend = ($recommend == 'true');
-        if ($recommend && $logtype != 'Found it')
+        if ($recommend && $logtype != Okapi::LOGTYPE_NAME_FOUNDIT)
         {
-            if ($logtype != 'Attended') {
+            if ($logtype != Okapi::LOGTYPE_NAME_ATTENDED) {
                 throw new BadRequest(
                     "Recommending is allowed only for 'Found it' and 'Attended' logs."
                 );
@@ -209,7 +209,7 @@ class WebService
             $recommend = null;
         }
 
-        if (in_array($logtype, array('Ready to search', 'Temporarily unavailable', 'Archived')))
+        if (in_array($logtype, array(Okapi::LOGTYPE_NAME_READYTOSEARCH, Okapi::LOGTYPE_NAME_TEMPORARYUNAVAILABLE, Okapi::LOGTYPE_NAME_ARCHIVED)))
         {
             if ($user['uuid'] != $cache['owner']['uuid']) {
                 throw new CannotPublishException(_(
@@ -222,7 +222,7 @@ class WebService
                 if (preg_replace('/^Ready to search$/', 'Available', $logtype) == $cache['status']) {
                     # OCPL does not allow to confirm an existing geocache status.
                     # We silently change the log to a comment.
-                    $logtype = 'Comment';
+                    $logtype = Okapi::LOGTYPE_NAME_COMMENT;
                 }
                 elseif ($cache['status'] == 'Archived') {
                     throw new CannotPublishException(sprintf(_(
@@ -231,7 +231,7 @@ class WebService
                 }
             }
 
-            if ($logtype == 'Archived' && $needs_maintenance2 != 'null')
+            if ($logtype == Okapi::LOGTYPE_NAME_ARCHIVED && $needs_maintenance2 != 'null')
             {
                 self::$success_message .= " "._(
                     "However, your maintenance status tag was ignored, because ".
@@ -239,7 +239,7 @@ class WebService
                 );
                 $needs_maintenance2 = 'null';
             }
-            elseif ($logtype == 'Ready to search')
+            elseif ($logtype == Okapi::LOGTYPE_NAME_READYTOSEARCH)
             {
                 # Geocaches must be in good shape before enabling them. At OCDE,
                 # enabling implies setting "cache is ok" (does not need maintenance).
@@ -253,7 +253,7 @@ class WebService
             }
         }
 
-        if ($logtype == "Didn't find it" && $needs_maintenance2 != 'null')
+        if ($logtype == Okapi::LOGTYPE_NAME_DIDNOTFIND && $needs_maintenance2 != 'null')
         {
             if ($needs_maintenance2 == 'false' || Settings::get('OC_BRANCH') == 'oc.de')
             {
@@ -369,25 +369,25 @@ class WebService
             # type is supported by this OC site. However, it's a separate log
             # type, so we might have to submit two log types together:
 
-            if ($logtype == 'Comment')
+            if ($logtype == Okapi::LOGTYPE_NAME_COMMENT)
             {
                 # If user submits a "Comment", we'll just change its type to
                 # "Needs maintenance". Only one log entry will be issued.
 
-                $logtype = 'Needs maintenance';
+                $logtype = Okapi::LOGTYPE_NAME_NEEDMAINTENANCE;
                 $second_logtype = null;
                 $second_formatted_comment = null;
             }
-            elseif ($logtype == 'Found it')
+            elseif ($logtype == Okapi::LOGTYPE_NAME_FOUNDIT)
             {
                 # If "Found it", then we'll issue two log entries: one "Found
                 # it" with the original comment, and second one "Needs
                 # maintenance" with empty comment.
 
-                $second_logtype = 'Needs maintenance';
+                $second_logtype = Okapi::LOGTYPE_NAME_NEEDMAINTENANCE;
                 $second_formatted_comment = "";
             }
-            elseif ($logtype == "Didn't find it")
+            elseif ($logtype == Okapi::LOGTYPE_NAME_DIDNOTFIND)
             {
                 # If "Didn't find it", then we'll issue two log entries, but this time
                 # we'll do this the other way around. The first "Didn't find it" entry
@@ -395,12 +395,12 @@ class WebService
                 # "Needs maintenance" log entry. (It's okay for this behavior to change
                 # in the future, but it seems natural to me.)
 
-                $second_logtype = 'Needs maintenance';
+                $second_logtype = Okapi::LOGTYPE_NAME_NEEDMAINTENANCE;
                 $second_formatted_comment = $formatted_comment;
                 $formatted_comment = "";
             }
             elseif (in_array($logtype, array(
-                'Ready to search', 'Temporarily unavailable', 'Archived')))
+                Okapi::LOGTYPE_NAME_READYTOSEARCH, Okapi::LOGTYPE_NAME_TEMPORARYUNAVAILABLE, Okapi::LOGTYPE_NAME_ARCHIVED)))
             {
                 # For status-changing logs, we'll issue two log entries, but this time
                 # we put the "Needs maintenance" first with empty comment, then the
@@ -408,10 +408,10 @@ class WebService
 
                 $second_logtype = $logtype;
                 $second_formatted_comment = $formatted_comment;
-                $logtype = 'Needs maintenance';
+                $logtype = Okapi::LOGTYPE_NAME_NEEDMAINTENANCE;
                 $formatted_comment = "";
             }
-            else if ($logtype == 'Will attend' || $logtype == 'Attended')
+            else if ($logtype == Okapi::LOGTYPE_NAME_WILLATTEND || $logtype == Okapi::LOGTYPE_NAME_ATTENDED)
             {
                 # OC branches which allow maintenance logs, still don't allow them on
                 # event caches.
@@ -629,7 +629,7 @@ class WebService
 
         # update geocache status
 
-        if (in_array($logtype, array('Ready to search', 'Temporarily unavailable', 'Archived')))
+        if (in_array($logtype, array(Okapi::LOGTYPE_NAME_READYTOSEARCH, Okapi::LOGTYPE_NAME_TEMPORARYUNAVAILABLE, Okapi::LOGTYPE_NAME_ARCHIVED)))
         {
             if (Settings::get('OC_BRANCH') == 'oc.de') {
                 Db::execute("
